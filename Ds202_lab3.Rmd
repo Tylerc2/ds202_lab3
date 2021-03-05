@@ -1,0 +1,130 @@
+---
+title: "Team"
+output: html_document
+---
+
+```{r}
+library(dplyr)
+df <- readxl::read_xls('C:/Users/tyler/OneDrive/Desktop/GSS.xls')
+
+df <- df %>% rename('Year'='Gss year for this respondent','ID'= 'Respondent id number','Married'= 'Marital status', 'School'='Highest year of school completed', 'Sex'= 'Respondents sex','Politics'='Political party affiliation', 'Religion'='Religion in which raised', 'Happiness'='General happiness','Ballot'='Ballot used for interview')
+
+df$School <- as.numeric(as.character(df$School))
+```
+
+```{r}
+
+library(dplyr)
+ mar_ed <- df %>%
+ group_by(Married) %>%
+ dplyr::summarize(Mean = mean(School, na.rm=TRUE))
+mar_ed
+```
+One pattern that is very interested is that of all the mean values the Mean value of married is very similiar to the Mean value of widowed, seperated, never married, and Divorced. (Excluded no Answer) this shows that people who are married have about the average age of education in the USA.
+
+```{r}
+library(dplyr)
+dfmar_ed <- df %>% 
+  group_by(Married) %>%
+  mutate(Smarter = case_when(
+  School > mean(School, na.rm=TRUE) ~ "True",
+  School < mean(School, na.rm=TRUE) ~ "False"
+))
+
+
+dfmar_ed <-dfmar_ed[(dfmar_ed$Smarter=="True"), ]
+
+dfmar_ed
+
+```
+
+
+
+
+```{r}
+library(dplyr)
+library(ggplot2)
+drop.cols <- c('Year','ID', 'School','Happiness', 'Sex','Politics', 'Religion','Ballot')
+
+
+
+df1 <- df %>% mutate(Real_Happiness = case_when(
+        Happiness == "Pretty happy" ~ "Happy",
+        Happiness == "Very happy" ~ "Happy", 
+        Happiness == "Not too happy" ~ "Not Happy",
+        Happiness == "Don't know" ~ "Not Happy",
+        Happiness == "No answer" ~ "Not Happy",
+        Happiness == "Not applicable" ~ "Not Happy"))
+
+df_mar <- df1 %>% select(-one_of(drop.cols))
+
+df_mar <- df_mar %>% mutate(Real_Happiness_Num = case_when(
+  Real_Happiness=="Not Happy" ~ 0,
+  Real_Happiness=="Happy" ~ 1
+))
+
+df1 <- df1 %>% mutate(Real_Happiness_Num = case_when(
+  Real_Happiness=="Not Happy" ~ 0,
+  Real_Happiness=="Happy" ~ 1
+))
+
+
+df_marnum <- df_mar %>%
+ group_by(Married) %>%
+ dplyr::summarize(Mean = mean(Real_Happiness_Num, na.rm=TRUE))
+
+
+df_marnum
+
+
+ggplot(df_marnum, 
+       aes(x = Married, 
+           y = Mean)) +geom_bar(stat = "identity") + theme(axis.text.x=element_text(angle=90, hjust=1))
+```
+
+It appears as though people who are married are happier but on average it is not that much greater
+
+
+```{r}
+library(dplyr)
+
+df1 <- df1 %>% mutate(Quick_Politics = case_when(
+        Politics == "Ind,near dem" ~ "Dem",
+        Politics == "Ind,near rep" ~ "Rep", 
+        Politics == "Independent" ~ "Other",
+        Politics == "Not str democrat" ~ "Dem",
+        Politics == "Not str republican" ~ "Rep",
+        Politics == "Other party" ~ "Other",
+        Politics == "Strong democrat" ~ "Dem",
+        Politics == "Strong republican" ~ "Rep",
+        Politics == "Don't know" ~ "Other"))
+
+df1
+ df1 %>%
+ group_by(Quick_Politics) %>%
+ dplyr::summarize(Mean = mean(Real_Happiness_Num, na.rm=TRUE))
+
+```
+There appears to be a a very limited correlation between how happy someones is and what there politcal stance is the difference in the means is around .04.
+
+Marital status and Ecuation level appear to show that people with more eeducation tend not to be currently married this may be because people who have achieved higher education have had to spend more time on that and haven't had time to get married.
+
+
+
+```{r}
+library(dplyr)
+df1 %>%
+ group_by(Sex) %>%
+ dplyr::summarize(Mean = mean(School, na.rm=TRUE))
+```
+After comparing Male and Female there is no major difference between how much schooling they recieve at least based on the data compiled
+
+```{r}
+
+df1 %>%
+ group_by(Quick_Politics) %>%
+ dplyr::summarize(Mean = mean(School, na.rm=TRUE))
+
+```
+There seems to be almost no correlation between education levels and Politcal leanings there is a slight difference being that Republicans in this surveyhave a slightly higher education level.
+
